@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Psychedelic Pills</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="pills.js"></script>
+<script>
+  // Lively Wallpaper entry point: settings come from LivelyProperties.json,
+  // audio from Lively's system audio capture (enabled by "--audio" in LivelyInfo.json).
+  const engine = PillsEngine.create(document.getElementById('c'));
+  window.livelyPropertyListener = (name, val) => engine.set(name, val);
+  window.livelyAudioListener = arr => engine.setAudio(arr);
+  engine.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+{
+  "pattern": {
+    "type": "dropdown",
+    "value": 0,
+    "text": "Pattern",
+    "items": [
+      "Psychedelic pills",
+      "Pill kaleidoscope",
+      "Pill vortex"
+    ]
+  },
+  "autoSwitch": {
+    "type": "checkbox",
+    "value": false,
+    "text": "Auto-switch patterns"
+  },
+  "switchEvery": {
+    "type": "slider",
+    "value": 30,
+    "min": 5,
+    "max": 120,
+    "step": 1,
+    "text": "Switch every (seconds)",
+    "help": "How long each pattern stays when auto-switching"
+  },
+  "symmetry": {
+    "type": "slider",
+    "value": 0,
+    "min": 0,
+    "max": 16,
+    "step": 1,
+    "text": "Kaleidoscope mirrors",
+    "help": "0 = off (original look), otherwise number of mirrored slices"
+  },
+  "speed": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 4,
+    "step": 0.05,
+    "text": "Flight speed",
+    "help": "How fast you fly through the pills"
+  },
+  "pillSize": {
+    "type": "slider",
+    "value": 1,
+    "min": 0.5,
+    "max": 2,
+    "step": 0.05,
+    "text": "Pill size",
+    "help": "Thickness of the pills"
+  },
+  "colorCycle": {
+    "type": "slider",
+    "value": 0.3,
+    "min": 0,
+    "max": 3,
+    "step": 0.05,
+    "text": "Color cycling speed",
+    "help": "How fast the rainbow bands shift"
+  },
+  "hueShift": {
+    "type": "slider",
+    "value": 0,
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "text": "Color offset",
+    "help": "Rotate the whole color palette"
+  },
+  "saturation": {
+    "type": "slider",
+    "value": 1.3,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Color intensity",
+    "help": "Higher = more psychedelic"
+  },
+  "glow": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 3,
+    "step": 0.05,
+    "text": "Brightness / glow",
+    "help": "Overall neon brightness"
+  },
+  "audioReactive": {
+    "type": "checkbox",
+    "value": true,
+    "text": "React to music"
+  },
+  "sensitivity": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 4,
+    "step": 0.05,
+    "text": "Music sensitivity",
+    "help": "Raise this if the music barely moves it"
+  },
+  "bassZoom": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Bass → pill swell",
+    "help": "Bass inflates the pills and widens the view"
+  },
+  "bassSpeed": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 3,
+    "step": 0.05,
+    "text": "Bass → speed boost",
+    "help": "Bass makes you fly faster"
+  },
+  "midWarp": {
+    "type": "slider",
+    "value": 0.6,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Mids → wobble",
+    "help": "Vocals and synths make the image ripple"
+  },
+  "trebleSparkle": {
+    "type": "slider",
+    "value": 0.8,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Treble → sparkle",
+    "help": "Hi-hats and cymbals make the colours shimmer"
+  },
+  "beatFlash": {
+    "type": "slider",
+    "value": 1,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Beat → flash",
+    "help": "Each kick drum flashes the glow"
+  },
+  "beatColor": {
+    "type": "slider",
+    "value": 0.15,
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "text": "Beat → color jump",
+    "help": "Each kick drum jumps the colors"
+  },
+  "beatSpin": {
+    "type": "slider",
+    "value": 0.5,
+    "min": 0,
+    "max": 2,
+    "step": 0.05,
+    "text": "Beat → roll",
+    "help": "Each kick drum rolls the camera"
+  },
+  "beatSwitch": {
+    "type": "checkbox",
+    "value": false,
+    "text": "Change pattern on big drops"
+  },
+  "smoothing": {
+    "type": "slider",
+    "value": 0.5,
+    "min": 0,
+    "max": 0.95,
+    "step": 0.05,
+    "text": "Reaction smoothness",
+    "help": "Low = snappy, high = smooth and floaty"
+  },
+  "mouseReactive": {
+    "type": "checkbox",
+    "value": true,
+    "text": "Follow mouse / touch"
+  },
+  "antialias": {
+    "type": "dropdown",
+    "value": 1,
+    "text": "Anti-aliasing",
+    "items": [
+      "Off (fastest)",
+      "2x (like the original)",
+      "3x (smoothest)"
+    ]
+  },
+  "quality": {
+    "type": "slider",
+    "value": 0.75,
+    "min": 0.25,
+    "max": 1,
+    "step": 0.05,
+    "text": "Render quality",
+    "help": "Lower this if your PC gets hot or games stutter"
+  },
+  "fpsLimit": {
+    "type": "slider",
+    "value": 60,
+    "min": 15,
+    "max": 144,
+    "step": 1,
+    "text": "FPS limit",
+    "help": "Lower = less GPU usage"
+  }
+}

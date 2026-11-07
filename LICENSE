@@ -1,0 +1,6 @@
+This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International License (CC BY-NC-SA 4.0): https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+It adapts "Psychedelic Pills" (c) 2022 @kishimisu - https://www.shadertoy.com/view/csfSRN,
+used under the same licence. Changes: ported to a WebGL engine for Lively Wallpaper, added
+music reaction, settings, a browser studio/recorder, and two pattern variants.

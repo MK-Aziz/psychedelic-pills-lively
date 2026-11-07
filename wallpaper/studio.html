@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Pills Studio</title>
+<style>
+  :root {
+    --bg: #000;
+    --panel: rgba(14, 12, 24, 0.86);
+    --line: rgba(255, 255, 255, 0.12);
+    --text: #f2eefc;
+    --muted: #a59fbd;
+    --accent: #c86bff;
+    --accent2: #4de3ff;
+    --rec: #ff4d6d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { display: block; }
+  body.fill canvas { width: 100vw; height: 100vh; }
+
+  #toggle { position: fixed; top: max(12px, env(safe-area-inset-top)); right: 12px; z-index: 3;
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); font-size: 20px; cursor: pointer; backdrop-filter: blur(10px); }
+  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; z-index: 2; overflow-y: auto;
+    padding: 64px 16px 24px; background: var(--panel); border-left: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: transform .25s ease; }
+  body.closed #panel { transform: translateX(100%); }
+  body.clean #panel, body.clean #toggle, body.clean #hud { display: none; }
+
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 12.5px; }
+  details { border-top: 1px solid var(--line); padding: 10px 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  summary::after { content: "▾"; color: var(--muted); }
+  details:not([open]) summary::after { content: "▸"; }
+  .row { margin: 12px 0 0; }
+  .row label { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12.5px; margin-bottom: 4px; }
+  .row label output { color: var(--text); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .check { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; cursor: pointer; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  select, .btn, .file { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(255,255,255,.06); color: var(--text); font: inherit; }
+  select option { background: #1a1628; }
+  .btn { cursor: pointer; text-align: center; font-weight: 600; }
+  .btn:hover { background: rgba(255,255,255,.12); }
+  .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #120a20; border: 0; }
+  .btn.rec { background: var(--rec); color: #fff; border: 0; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+  .status { margin-top: 8px; font-size: 12.5px; min-height: 1.4em; }
+  #dl { display: block; margin-top: 8px; color: var(--accent2); word-break: break-all; }
+  .file { display: block; cursor: pointer; text-align: center; font-weight: 600; }
+  .file input { display: none; }
+
+  #hud { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 1; display: flex; gap: 4px; align-items: flex-end; height: 40px; pointer-events: none; }
+  #hud span { width: 10px; border-radius: 3px; background: var(--accent2); opacity: .8; height: 2px; transition: height .05s; }
+  #hud span:nth-child(2) { background: var(--accent); }
+  #hud span:nth-child(3) { background: #ffd34d; }
+  #hud span:nth-child(4) { background: var(--rec); }
+  #recdot { position: fixed; top: max(14px, env(safe-area-inset-top)); left: 14px; z-index: 3; display: none;
+    padding: 6px 12px; border-radius: 999px; background: var(--rec); color: #fff; font-weight: 700; font-size: 13px; }
+  body.recording #recdot { display: block; }
+  #err { position: fixed; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+
+  @media (min-width: 641px) {
+    body:not(.closed):not(.clean):not(.fill) #stage { right: 340px; }
+  }
+  @media (max-width: 640px) {
+    #panel { top: auto; left: 0; width: auto; max-height: 62vh; border-left: 0; border-top: 1px solid var(--line);
+      border-radius: 18px 18px 0 0; padding: 18px 16px calc(24px + env(safe-area-inset-bottom)); }
+    body.closed #panel { transform: translateY(100%); }
+  }
+</style>
+</head>
+<body class="fill">
+<div id="stage"><canvas id="c"></canvas></div>
+<div id="err"></div>
+<div id="recdot">● REC</div>
+<button id="toggle" aria-label="Settings">⚙</button>
+<div id="hud" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+
+<aside id="panel">
+  <h1>Pills Studio</h1>
+  <p class="sub">Play with patterns, feed it music, and record vertical Reels.</p>
+
+  <details open>
+    <summary>Format &amp; recording</summary>
+    <div class="row">
+      <label for="format">Canvas format</label>
+      <select id="format">
+        <option value="fill">Fill screen (live view)</option>
+        <option value="1080x1920" selected>Reel / Story 9:16 · 1080×1920</option>
+        <option value="720x1280">Reel 9:16 · 720×1280 (lighter)</option>
+        <option value="1080x1350">Feed portrait 4:5 · 1080×1350</option>
+        <option value="1080x1080">Square 1:1 · 1080×1080</option>
+        <option value="1920x1080">Landscape 16:9 · 1920×1080</option>
+      </select>
+    </div>
+    <div class="grid2">
+      <div>
+        <label class="note" for="dur">Length</label>
+        <select id="dur">
+          <option value="5">5 s (iPhone Live Photo)</option>
+          <option value="15" selected>15 s</option>
+          <option value="30">30 s</option>
+          <option value="60">60 s</option>
+          <option value="90">90 s</option>
+          <option value="song">Whole song</option>
+        </select>
+      </div>
+      <div>
+        <label class="note" for="fps">Frame rate</label>
+        <select id="fps">
+          <option value="30" selected>30 fps</option>
+          <option value="60">60 fps</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <button class="btn rec" id="recBtn">● Record</button>
+      <button class="btn" id="cleanBtn">Hide UI</button>
+    </div>
+    <div class="status" id="recStatus"></div>
+    <a id="dl" hidden></a>
+    <p class="note">Recording happens live, so leave this tab in front until it finishes. If the video stutters, choose 720×1280 or 30 fps.</p>
+  </details>
+
+  <details open>
+    <summary>Music input</summary>
+    <div class="grid2">
+      <label class="file">🎵 Music file<input type="file" id="file" accept="audio/*"></label>
+      <button class="btn" id="micBtn">🎤 Microphone</button>
+    </div>
+    <div class="grid2">
+      <button class="btn" id="playBtn" disabled>Pause</button>
+      <button class="btn" id="stopAudioBtn" disabled>Stop input</button>
+    </div>
+    <div class="status" id="audioStatus">No music yet: load a song or use the mic.</div>
+    <p class="note">A loaded song is recorded into the video. With the mic, only the visuals are recorded.</p>
+  </details>
+
+  <div id="settings"></div>
+
+  <div class="grid2" style="margin-top:16px">
+    <button class="btn" id="resetBtn">Reset settings</button>
+    <button class="btn" id="randomBtn">🎲 Randomize</button>
+  </div>
+</aside>
+
+<script src="pills.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('c');
+  const { SETTINGS, PATTERNS } = PillsEngine;
+  const STORE = 'pills-studio-v1';
+
+  let engine;
+  try {
+    engine = PillsEngine.create(canvas);
+  } catch (e) {
+    $('err').style.display = 'grid';
+    $('err').textContent = 'Could not start WebGL on this device: ' + e.message;
+    return;
+  }
+
+  // ---------- Settings panel ----------
+  const inputs = {};
+  const groups = {};
+  SETTINGS.forEach(s => (groups[s.group] = groups[s.group] || []).push(s));
+
+  const fmtVal = (s, v) => s.step >= 1 ? String(Math.round(v)) : Number(v).toFixed(2);
+
+  Object.keys(groups).forEach((g, gi) => {
+    const det = document.createElement('details');
+    if (gi < 2) det.open = true;
+    det.innerHTML = `<summary>${g === 'Music' ? 'Music reaction' : g}</summary>`;
+    groups[g].forEach(s => {
+      let el;
+      if (s.type === 'checkbox') {
+        const lab = document.createElement('label');
+        lab.className = 'check';
+        el = document.createElement('input');
+        el.type = 'checkbox';
+        lab.append(el, document.createTextNode(s.text));
+        det.append(lab);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const lab = document.createElement('label');
+        lab.textContent = s.text;
+        if (s.type === 'dropdown') {
+          el = document.createElement('select');
+          s.items.forEach((it, i) => el.add(new Option(it, i)));
+        } else {
+          el = document.createElement('input');
+          el.type = 'range';
+          el.min = s.min; el.max = s.max; el.step = s.step;
+          const out = document.createElement('output');
+          lab.append(out);
+          el._out = out;
+        }
+        if (s.help) row.title = s.help;
+        row.append(lab, el);
+        det.append(row);
+      }
+      el.id = 's-' + s.key;
+      el.addEventListener('input', () => { apply(s.key, readInput(s)); save(); });
+      inputs[s.key] = el;
+    });
+    $('settings').append(det);
+  });
+
+  function readInput(s) {
+    const el = inputs[s.key];
+    return s.type === 'checkbox' ? el.checked : Number(el.value);
+  }
+  function apply(key, val) {
+    const s = SETTINGS.find(x => x.key === key);
+    const el = inputs[key];
+    if (s.type === 'checkbox') el.checked = !!val; else el.value = val;
+    if (el._out) el._out.textContent = fmtVal(s, val);
+    engine.set(key, val);
+  }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(engine.S)); } catch (e) { /* storage unavailable */ }
+  }
+  function load() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { saved = {}; }
+    SETTINGS.forEach(s => apply(s.key, s.key in saved ? saved[s.key] : s.value));
+  }
+  load();
+  engine.start();
+
+  $('resetBtn').onclick = () => { SETTINGS.forEach(s => apply(s.key, s.value)); save(); };
+  $('randomBtn').onclick = () => {
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    apply('pattern', Math.floor(Math.random() * PATTERNS.length));
+    apply('symmetry', [0, 3, 4, 5, 6, 6, 8, 8, 10, 12][Math.floor(Math.random() * 10)]);
+    apply('hueShift', +rnd(0, 1).toFixed(2));
+    apply('colorCycle', +rnd(0.1, 1.2).toFixed(2));
+    apply('speed', +rnd(0.5, 1.8).toFixed(2));
+    apply('saturation', +rnd(1, 1.8).toFixed(2));
+    save();
+  };
+
+  // ---------- Format ----------
+  function applyFormat() {
+    const v = $('format').value;
+    if (v === 'fill') {
+      engine.setFixedSize(null);
+      document.body.classList.add('fill');
+      canvas.style.width = canvas.style.height = '';
+    } else {
+      const [w, h] = v.split('x').map(Number);
+      engine.setFixedSize(w, h);
+      document.body.classList.remove('fill');
+      const stage = $('stage');
+      const sc = Math.min(stage.clientWidth / w, stage.clientHeight / h);
+      canvas.style.width = Math.floor(w * sc) + 'px';
+      canvas.style.height = Math.floor(h * sc) + 'px';
+    }
+  }
+  $('format').onchange = applyFormat;
+  window.addEventListener('resize', applyFormat);
+  applyFormat();
+
+  // ---------- Panel / clean view ----------
+  $('toggle').onclick = () => { document.body.classList.toggle('closed'); applyFormat(); };
+  $('cleanBtn').onclick = () => { document.body.classList.add('clean'); applyFormat(); };
+  $('stage').addEventListener('click', () => { document.body.classList.remove('clean'); applyFormat(); });
+  if (window.innerWidth <= 640) { document.body.classList.add('closed'); applyFormat(); }
+
+  // ---------- Audio ----------
+  let ac, analyser, recDest, audioEl, mediaSrc, micStream, micSrc, freq;
+  let source = 'none';
+
+  function ensureAudio() {
+    if (!ac) {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = ac.createAnalyser();
+      analyser.fftSize = 512;               // 256 bins of ~94 Hz; we use the first 128 (0–12 kHz)
+      analyser.smoothingTimeConstant = 0.5;
+      recDest = ac.createMediaStreamDestination();
+      freq = new Uint8Array(analyser.frequencyBinCount);
+    }
+    if (ac.state === 'suspended') ac.resume();
+  }
+  function stopMic() {
+    if (micSrc) { micSrc.disconnect(); micSrc = null; }
+    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  }
+  function setAudioUI(text) {
+    $('audioStatus').textContent = text;
+    $('playBtn').disabled = source !== 'file';
+    $('stopAudioBtn').disabled = source === 'none';
+    $('playBtn').textContent = audioEl && !audioEl.paused ? 'Pause' : 'Play';
+  }
+
+  $('file').onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    ensureAudio();
+    stopMic();
+    if (!audioEl) {
+      audioEl = new Audio();
+      audioEl.loop = true;
+      audioEl.addEventListener('play', () => setAudioUI($('audioStatus').textContent));
+      audioEl.addEventListener('pause', () => setAudioUI($('audioStatus').textContent));
+      mediaSrc = ac.createMediaElementSource(audioEl);
+      mediaSrc.connect(analyser);
+      mediaSrc.connect(ac.destination);
+      mediaSrc.connect(recDest);
+    }
+    if (audioEl.src) URL.revokeObjectURL(audioEl.src);
+    audioEl.src = URL.createObjectURL(f);
+    audioEl.play().catch(() => {});
+    source = 'file';
+    setAudioUI('Playing: ' + f.name);
+  };
+
+  $('micBtn').onclick = async () => {
+    ensureAudio();
+    if (audioEl) audioEl.pause();
+    try {
+      stopMic();
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      micSrc = ac.createMediaStreamSource(micStream);
+      micSrc.connect(analyser);
+      source = 'mic';
+      setAudioUI('Listening through the microphone. Play music near it.');
+    } catch (err) {
+      setAudioUI('Microphone unavailable: ' + (err.message || err.name) + '. On iPhone the page must be opened over https.');
+    }
+  };
+  $('playBtn').onclick = () => { if (!audioEl) return; if (audioEl.paused) audioEl.play(); else audioEl.pause(); };
+  $('stopAudioBtn').onclick = () => {
+    if (audioEl) audioEl.pause();
+    stopMic();
+    source = 'none';
+    setAudioUI('Music input stopped.');
+  };
+
+  const bins = new Float32Array(128);
+  const hud = $('hud').children;
+  function pumpAudio() {
+    requestAnimationFrame(pumpAudio);
+    const active = (source === 'file' && audioEl && !audioEl.paused) || source === 'mic';
+    if (analyser && active) {
+      analyser.getByteFrequencyData(freq);
+      for (let i = 0; i < 128; i++) bins[i] = freq[i] / 255;
+      engine.setAudio(bins);
+    }
+    const L = engine.levels();
+    [L.bass, L.mid, L.high, L.kick].forEach((v, i) => { hud[i].style.height = (2 + Math.min(1, v) * 38) + 'px'; });
+  }
+  pumpAudio();
+
+  // ---------- Recording ----------
+  function pickMime() {
+    if (!window.MediaRecorder) return null;
+    const list = [
+      'video/mp4;codecs=avc1.640028,mp4a.40.2',
+      'video/mp4;codecs=avc1.4d002a,mp4a.40.2',
+      'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/mp4',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+    ];
+    return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  }
+  const canRecord = !!(window.MediaRecorder && canvas.captureStream);
+  if (!canRecord) {
+    $('recBtn').disabled = true;
+    $('recStatus').textContent = 'This browser cannot record video. Try Chrome or Edge on a computer.';
+  }
+
+  let rec = null, recTimer = 0, recEnd = 0, savedFps = null;
+  $('recBtn').onclick = () => (rec ? stopRecording() : startRecording());
+
+  async function startRecording() {
+    const fps = Number($('fps').value);
+    let dur = $('dur').value === 'song'
+      ? (source === 'file' && audioEl && isFinite(audioEl.duration) ? audioEl.duration : 30)
+      : Number($('dur').value);
+
+    if (engine.S.fpsLimit < fps) { savedFps = engine.S.fpsLimit; apply('fpsLimit', fps); }
+
+    // Make sure the canvas has been rendered at the export size before capturing
+    $('recBtn').disabled = true;
+    const frames = n => new Promise(r => { const f = () => (n-- > 0 ? requestAnimationFrame(f) : r()); f(); });
+    await Promise.race([frames(3), new Promise(r => setTimeout(r, 500))]);
+    $('recBtn').disabled = false;
+
+    const stream = canvas.captureStream(fps);
+    const withSong = source === 'file' && audioEl;
+    if (withSong) {
+      audioEl.currentTime = 0;
+      try { await audioEl.play(); } catch (e) { /* ignore */ }
+      const tr = recDest.stream.getAudioTracks()[0];
+      if (tr) stream.addTrack(tr);
+    }
+
+    const mime = pickMime();
+    const pixels = canvas.width * canvas.height;
+    const opts = { videoBitsPerSecond: pixels >= 1.5e6 ? 16e6 : 8e6, audioBitsPerSecond: 192000 };
+    if (mime) opts.mimeType = mime;
+    try {
+      rec = new MediaRecorder(stream, opts);
+    } catch (e) {
+      $('recStatus').textContent = 'Could not start recording: ' + e.message;
+      return;
+    }
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      clearInterval(recTimer);
+      document.body.classList.remove('recording');
+      $('recBtn').textContent = '● Record';
+      stream.getVideoTracks().forEach(t => t.stop());
+      if (savedFps !== null) { apply('fpsLimit', savedFps); savedFps = null; }
+      const type = (rec && rec.mimeType) || mime || 'video/webm';
+      rec = null;
+      const blob = new Blob(chunks, { type });
+      const ext = type.includes('mp4') ? 'mp4' : 'webm';
+      const name = `pills-${PATTERNS[engine.currentPattern()].toLowerCase().replace(/\s+/g, '-')}-${canvas.width}x${canvas.height}-${Date.now()}.${ext}`;
+      const url = URL.createObjectURL(blob);
+      const a = $('dl');
+      a.href = url; a.download = name; a.hidden = false;
+      a.textContent = '⬇ Download ' + name + ' (' + (blob.size / 1048576).toFixed(1) + ' MB)';
+      a.click();
+      $('recStatus').textContent = ext === 'mp4'
+        ? 'Done! MP4 ready for Instagram.'
+        : 'Done! Saved as WebM. Instagram needs MP4, so convert it (e.g. with HandBrake) or record in Chrome/Edge.';
+    };
+
+    rec.start(500);
+    document.body.classList.add('recording');
+    $('recBtn').textContent = '■ Stop';
+    $('dl').hidden = true;
+    recEnd = performance.now() + dur * 1000;
+    const tick = () => {
+      const left = Math.max(0, (recEnd - performance.now()) / 1000);
+      $('recStatus').textContent = `Recording ${canvas.width}×${canvas.height} @ ${fps} fps${withSong ? ' with music' : ''}: ${left.toFixed(0)} s left`;
+      $('recdot').textContent = '● REC ' + left.toFixed(0) + 's';
+      if (left <= 0) stopRecording();
+    };
+    tick();
+    recTimer = setInterval(tick, 250);
+  }
+
+  function stopRecording() {
+    if (rec && rec.state !== 'inactive') rec.stop();
+  }
+})();
+</script>
+</body>
+</html>
